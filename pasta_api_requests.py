@@ -44,7 +44,8 @@ def search_request(fqs, fls, sort, rows, env='production'):
 
 def recent_changes_request(scope, fromdt, todt=None):
     """
-    This is the _list recent changes_ call.
+    This is the _list recent changes_ call. It returns an xml populated with 
+    operations in the PASTA database.
 
     curl -i -X GET 'https://pasta.lternet.edu/package/changes/eml?fromDate=2017-02-01T12:00:00&toDate=2020-01-28&scope=knb-lter-jrn'
 
@@ -69,8 +70,8 @@ def pkg_entity_names(scope, identifier, revision):
     Request entity identifiers and names for a specified data package.
 
     Note that PASTA returns a csv-like text object, but some entity names have
-    commas, so they won't parse with pandas read_csv. This parses and
-    returns a dataframe.
+    commas, so they won't parse with pandas read_csv (using StringIO, for ex.).
+    This function parses the text object and returns a dataframe.
     
     API documentation:
 
@@ -91,7 +92,9 @@ def pkg_entity_names(scope, identifier, revision):
 
 def pkg_entity_metadata(scope, identifier, revision, entityid):
     """
-    Get entity names/identifiers for a specified data package.
+    Get entity names/identifiers for a specified data package. Entityid is
+    the identifier hash for the entity in PASTA, which can be returned using
+    the pkg_entity_names function.
 
     PASTA returns an XML tree with metadata for the entity. This function
     returns the ElementTree root derived from it.

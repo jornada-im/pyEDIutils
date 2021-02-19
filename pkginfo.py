@@ -14,10 +14,11 @@ def entity_table(scope, identifier, revision):
     df = rq.pkg_entity_names(scope, identifier, revision)
     # Add some columns to dataframe
     df['packageid'] = '.'.join([scope, identifier, revision])
+    df['datasetid'] = identifier
     df['entityorder'] = df.index + 1
-    df['filename'] = 'NA'
+    df['filename'] = ''
     df['entitytype'] = 'otherEntity'
-    df['filetype'] = None
+    df['filetype'] = ''
     # Loop through entity ids and add filename, entitytypes and filetypes.
     for i, e in enumerate(df.entityid):
         # request metadata for the entity
