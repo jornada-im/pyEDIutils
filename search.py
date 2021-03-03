@@ -15,11 +15,20 @@ def searchroot_to_df(root, fields):
         if (f=='keyword' or f=='author'):
             dfill[f+'s'] = [';'.join([v.text for v in vs.iter(f)]) 
                     for vs in root.iter(f+'s')]
+        elif f=='coordinates':
+            # The solr search sends back a set of coordinates for each
+            # geographicCoverage element, so if there are multiple elements
+            # this will create a column that exceeds the number of datasetids
+            # Not sure how to parse these multiple returns yet, so just
+            # counting them here.
+            #dfill[f] = [';'.join([v.text for v in vs.iter(f)]) 
+            #        for vs in root.iter(f)]
+            print('More than 1 spatial entity per packageid, so just counting')
+            dfill[f + '_ent'] = [len(sc.findall('coordinates'))
+                for sc in root.iter('spatialCoverage')]
         else:
             dfill[f] = [v.text for v in root.iter(f)]
-    # This fails on keyword or authors fields
-    #dfill = {f: [g.text for g in root.iter(f)] for f in fields
-    #        if 'keyword' not in f}
+    # Make a dataframe from dfill
     df = pd.DataFrame(dfill)
     return(df)
                       
@@ -27,7 +36,7 @@ def searchroot_to_df(root, fields):
         
 def request_search(query='scope:knb-lter-jrn',
         fields=['packageid','doi','title','pubdate'],
-        sortby='packageid,asc', rows=500):
+        sortby='packageid,asc', rows=500, returnroot=False):
     """
     Get packages and relevant fields for a given scope. Uses the Apache
     solr search in PASTA:
@@ -53,5 +62,8 @@ def request_search(query='scope:knb-lter-jrn',
     root = rq.search_request(fq, fl, sort, rows)
     # Convert elements to rows in dataframe
     df_out = searchroot_to_df(root, fields)
-    return(df_out)
+    if returnroot:
+        return (df_out, root)
+    else:
+        return df_out
 
