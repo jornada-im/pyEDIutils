@@ -2,6 +2,7 @@ import requests
 from requests.compat import urljoin
 import xml.etree.ElementTree as ET
 import pandas as pd
+from datetime import date
 import os
 import pdb
 
@@ -132,3 +133,149 @@ def pkg_revisions(identifier, scope='knb-lter-jrn', filt='newest'):
         return response.text
     else:
         return response.text.split('\n')
+
+def aud_document(identifier, scope='knb-lter-jrn'):
+    """Get an audit report for access to a document (scope.identifier)
+
+    Parameters
+    ----------
+    identifier : int
+        [description]
+    scope : str, optional
+        [description], by default 'knb-lter-jrn'
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
+    # Create the URL
+    base_url = 'https://pasta.lternet.edu/audit/reads/'
+    rq_url = urljoin(base_url, '/'.join([scope, str(identifier)]))
+    # Request, print return
+    response = requests.get(rq_url)#, params=params)
+    print(response.request.url)
+    root = ET.fromstring(response.text)
+    return(root)
+
+
+def aud_package(identifier, rev=1, scope='knb-lter-jrn'):
+    """Get an audit report for access to a datapackage (scope.identifier.rev)
+
+    Parameters
+    ----------
+    identifier : int
+        [description]
+    rev : str, optional
+        [description], by default '1'
+    scope : str, optional
+        [description], by default 'knb-lter-jrn'
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
+    # Create the URL
+    base_url = 'https://pasta.lternet.edu/audit/reads/'
+    rq_url = urljoin(base_url, '/'.join([scope, str(identifier), str(rev)]))
+    # Request print return
+    response = requests.get(rq_url)#, params=params)
+    print(response.request.url)
+    root = ET.fromstring(response.text)
+    return(root)
+
+
+def aud_report_dpm(servmethod, user, group, resid, fromdt, todt, lim,
+                   dn, pw):
+    """Get an audit report from the PASTA data package manager
+
+    Parameters
+    ----------
+    servmethod : [type]
+        [description]
+    user : [type]
+        [description]
+    group : [type]
+        [description]
+    resid : [type]
+        [description]
+    fromdt : [type]
+        [description]
+    todt : [type]
+        [description]
+    lim : [type]
+        [description]
+    dn : [type]
+        [description]
+    pw : [type]
+        [description]
+    """
+    # Create the URL
+    base_url = 'https://pasta.lternet.edu/audit/report/'
+    rq_url = base_url
+    # Parameters
+    params = (
+        ('category', 'info'),
+        ('service', 'DataPackageManager-1.0'),
+        ('serviceMethod', servmethod),
+        ('user', user),
+        ('group', group),
+        ('authSystem', 'https://pasta.edirepository.org/authentication'),
+        ('resourceId', resid),
+        ('fromTime', fromdt),
+        ('toTime', todt),
+        ('limit', lim)
+    )
+    # Request, print return
+    response = requests.get(rq_url, params=params, auth=(dn, pw))
+    print(response.request.url)
+    root = ET.fromstring(response.text)
+    return(root)
+
+def aud_count_dpm(servmethod, user, group, resid, fromdt, todt, lim,
+                  dn, pw):
+    """Get an audit count from the PASTA data package manager
+
+    Parameters
+    ----------
+    servmethod : [type]
+        [description]
+    user : [type]
+        [description]
+    group : [type]
+        [description]
+    resid : [type]
+        [description]
+    fromdt : [type]
+        [description]
+    todt : [type]
+        [description]
+    lim : [type]
+        [description]
+    dn : [type]
+        [description]
+    pw : [type]
+        [description]
+    """
+    # Create the URL
+    base_url = 'https://pasta.lternet.edu/audit/count/'
+    rq_url = base_url
+    # Parameters
+    params = (
+        ('category', 'info'),
+        ('service', 'DataPackageManager-1.0'),
+        ('serviceMethod', servmethod),
+        ('user', user),
+        ('group', group),
+        ('authSystem', 'https://pasta.edirepository.org/authentication'),
+        ('resourceId', resid),
+        ('fromTime', fromdt),
+        ('toTime', todt),
+        ('limit', lim)
+    )
+    # Request, print return
+    response = requests.get(rq_url, params=params, auth=(dn, pw))
+    print(response.request.url)
+    root = ET.fromstring(response.text)
+    return(root)
