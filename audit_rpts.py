@@ -12,12 +12,13 @@ def auditroot_to_df(ediroot):
     # Iterate over each element in ediroot and extract the variables
     print(ediroot.text)
     df = pd.DataFrame({'scope':[scope.text for scope in ediroot.iter('scope')],
-                   'identifier':[int(ident.text) for ident in ediroot.iter('identifier')],
-                   'revision':[int(rev.text) for rev in ediroot.iter('revision')],
-                   'resource':[rtype.text for rtype in ediroot.iter('resourceType')],
-                   'total_reads':[int(tot.text) for tot in ediroot.iter('totalReads')],
-                   'non_robot_reads':[int(nrr.text) for nrr in ediroot.iter('nonRobotReads')]}
-                   )
+        'identifier':[int(ident.text) for ident in ediroot.iter('identifier')],
+        'revision':[int(rev.text) for rev in ediroot.iter('revision')],
+        'resource':[rtype.text for rtype in ediroot.iter('resourceType')],
+        'total_reads':[int(tot.text) for tot in ediroot.iter('totalReads')],
+        'non_robot_reads':[int(nrr.text) for nrr 
+                           in ediroot.iter('nonRobotReads')]}
+        )
     return(df)
 
 def auditreport_to_df(ediroot):
@@ -28,11 +29,12 @@ def auditreport_to_df(ediroot):
     """
     # Iterate over each element in ediroot and extract the variables
     print(ediroot.text)
-    df = pd.DataFrame({'entry_dt':[etime.text for etime in ediroot.iter('entryTime')],
-                   'method':[meth.text for meth in ediroot.iter('serviceMethod')],
-                   'resource_id':[rid.text for rid in ediroot.iter('resourceId')],
-                   'user':[user.text for user in ediroot.iter('user')]}
-                   )
+    df = pd.DataFrame({
+        'entry_dt':[etime.text for etime in ediroot.iter('entryTime')],
+        'method':[meth.text for meth in ediroot.iter('serviceMethod')],
+        'resource_id':[rid.text for rid in ediroot.iter('resourceId')],
+        'user':[user.text for user in ediroot.iter('user')]}
+        )
     return(df)
 
 def request_audit(identifier, rev=None, scope='knb-lter-jrn'):
@@ -56,7 +58,6 @@ def request_audit(identifier, rev=None, scope='knb-lter-jrn'):
         print('Requesting access data for {0}.{1}'.format(
             scope, identifier))
         root = rq.aud_document(identifier, scope=scope)
-        print(root)
     
     # Convert elements to rows in dataframe
     df_out = auditroot_to_df(root)
