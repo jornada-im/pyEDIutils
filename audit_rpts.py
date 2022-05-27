@@ -2,6 +2,7 @@ import pyEDIutils.pasta_api_requests as rq
 import pandas as pd
 from datetime import date
 import os
+import pdb
     
 def auditroot_to_df(ediroot):
     """
@@ -33,7 +34,9 @@ def auditreport_to_df(ediroot):
         'entry_dt':[etime.text for etime in ediroot.iter('entryTime')],
         'method':[meth.text for meth in ediroot.iter('serviceMethod')],
         'resource_id':[rid.text for rid in ediroot.iter('resourceId')],
-        'user':[user.text for user in ediroot.iter('user')]}
+        'user':[user.text for user in ediroot.iter('user')],
+        'group':[groups.text for groups in ediroot.iter('groups')],
+        'useragent':[agent.text for agent in ediroot.iter('userAgent')]}
         )
     return(df)
 
