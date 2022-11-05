@@ -56,11 +56,13 @@ def request_audit(identifier, rev=None, scope='knb-lter-jrn'):
     if rev is not None:
         print('Requesting access data for {0}.{1}.{2}'.format(scope,
             identifier, rev))
-        root = rq.aud_package(identifier, rev=rev, scope=scope)
+        response = rq.aud_package(identifier, rev=rev, scope=scope)
+        root = rq.response_to_ET(response)
     else:
         print('Requesting access data for {0}.{1}'.format(
             scope, identifier))
-        root = rq.aud_document(identifier, scope=scope)
+        response = rq.aud_document(identifier, scope)
+        root = rq.response_to_ET(response)
     
     # Convert elements to rows in dataframe
     df_out = auditroot_to_df(root)
@@ -69,7 +71,7 @@ def request_audit(identifier, rev=None, scope='knb-lter-jrn'):
 
 
 
-def request_aud_report(servmethod, dn, pw, user=None, group=None,
+def request_audit_report(servmethod, dn, pw, user=None, group=None,
                        resid='knb-lter-jrn', fromdt=date.today(), todt=None,
                        lim=10000):
     """Get an audit report from PASTA+
@@ -97,8 +99,9 @@ def request_aud_report(servmethod, dn, pw, user=None, group=None,
     """
     # An element tree will be returned from the api request
     print('Requesting audit report for {0} starting {1}'.format(resid, fromdt))
-    root = rq.aud_report_dpm(servmethod, user, group, resid, fromdt, todt, lim,
+    response = rq.aud_report_dpm(servmethod, user, group, resid, fromdt, todt, lim,
                    dn, pw)
+    root = rq.response_to_ET(response)
     # Convert elements to rows in dataframe
     df_out = auditreport_to_df(root)
 

@@ -34,7 +34,7 @@ def searchroot_to_df(root, fields):
                       
 
         
-def request_search(query='scope:knb-lter-jrn',
+def search_pasta(query='scope:knb-lter-jrn',
         fields=['packageid','doi','title','pubdate'],
         sortby='packageid,asc', rows=500, returnroot=False):
     """
@@ -48,7 +48,7 @@ def request_search(query='scope:knb-lter-jrn',
                                '-packageid:*.210308*'],
                         fields=('packageid','title','pubdate','keyword',
                                 'author','begindate','enddate','doi'),
-                       sortfields='packageid,desc')
+                       sortby='packageid,desc')
     """
     # fq must be a 'field:queryterm' or list of 'field:queryterm'
     # possible fields are 'scope', 'author', 'title', 'packageid', etc
@@ -59,7 +59,8 @@ def request_search(query='scope:knb-lter-jrn',
     # Fields to sort on (follow with ',asc' or ',desc'
     sort = sortby
     # An element tree will be returned from the api request
-    root = rq.search_request(fq, fl, sort, rows)
+    response = rq.pasta_solr_search(fq, fl, sort, rows)
+    root = rq.response_to_ET(response)
     # Convert elements to rows in dataframe
     df_out = searchroot_to_df(root, fields)
     if returnroot:

@@ -8,6 +8,11 @@ def changeroot_to_df(ediroot):
     Convert an Element Tree object to a dataframe. Each element has
     date, packageid, and service method extracted into a row in the 
     dataframe.
+
+    Parameters
+    ----------
+    ediroot : xml tree
+        An XML tree returned from an EDI changes request
     """
     # Iterate over each element in ediroot and extract the variables
     df = pd.DataFrame({'date':[date.text for date in ediroot.iter('date')],
@@ -17,25 +22,36 @@ def changeroot_to_df(ediroot):
     return(df)
 
 def drop_duplicates(df):
-    """
+    """Drop duplicate PASTA database records
+    
     PASTA produces some duplicate change records, usually deletes. At last
-    count there were 9 duiplicates in the JRN records. This removes those.
+    count there were 9 duplicates in the JRN records. This removes those.
+
+    Parameters
+    ----------
+    df : pandas dataframe
+        A table of changes from the PASTA database
     """
     df_dd = df.drop_duplicates()
     n_dupdeletes = df.shape[0] - df_dd.shape[0]
     print('{0} duplicate records were removed.'.format(n_dupdeletes))
     return(df_dd)
     
-def archived_changes(archivedir='./edi_requests/', scope='knb-lter-jrn',
-                  dedup=True, parsedt=False):
+def load_archived_changes(archivedir='./edi_requests/', scope='knb-lter-jrn',
+    dedup=True, parsedt=False):
     """
     Load archived PASTA change records from xml files and parse into dataframe.
 
-    Options
-        archivedir  path to archive directory string ('./edi_requests')
-        scope       EDI scope string ('knb-lter-jrn')
-        dedup       remove duplicates boolean (True)
-        parsedt     parse 'date' field to datetime index boolean (False) 
+    Parameters
+    ----------
+    archivedir : str, optional
+        path to archive directory string ('./edi_requests'), by default './edi_requests/'
+    scope : str, optional
+        EDI scope string, by default 'knb-lter-jrn'
+    dedup : bool, optional
+        remove duplicates boolean, by default True
+    parsedt : bool, optional
+        parse 'date' field to datetime index boolean, by default False
     """
     # List files and select scope
     files = os.listdir(archivedir)
@@ -43,7 +59,7 @@ def archived_changes(archivedir='./edi_requests/', scope='knb-lter-jrn',
     # Load each archive, convert to dataframe, and concatenate
     for i, f in enumerate(scopefiles):
         print('Reading archived PASTA request {0}'.format(f))
-        root = rq.load_xml(os.path.join('edi_requests', f))
+        root = rq.archived_response_to_ET(os.path.join('edi_requests', f))
         df = changeroot_to_df(root)
         if i==0:
             df_out = df
@@ -57,24 +73,60 @@ def archived_changes(archivedir='./edi_requests/', scope='knb-lter-jrn',
         #, format='%Y-%b-%dT%H:%M:%S.%f')
     return(df_out)
 
-
-def request_changes(fromdt, todt=None, scope='knb-lter-jrn',
-        dedup = True, parsedt=False):
+def archive_requested_changes(fromdt, todt=None, scope='knb-lter-jrn',
+    archivedir='./edi_requests/'):
     """
     Request PASTA change records in specified temporal range and parse
     into a dataframe.
 
-    Options
-        fromdt      datetime string (required)
-        todt        datetime string (None)
-        scope       EDI scope string ('knb-lter-jrn')
-        dedup       remove duplicates boolean (True)
-        parsedt     parse 'date' field to datetime index boolean (False) 
+    Parameters
+    ----------
+    fromdt : string
+        datetime string (YYYY-MM-DD)
+    todt : string, optional
+        datetime string (YYYY-MM-DD), by default None
+    scope : str, optional
+        EDI scope string, by default 'knb-lter-jrn'
+    archivedir : str, optional
+        path to archive directory string ('./edi_requests'), by default './edi_requests/'
     """
     # An element tree will be returned from the api request
     print('Requesting PASTA changes for {0} from {1} to {2}'.format(
         scope, fromdt, todt))
-    root = rq.recent_changes_request(scope, fromdt, todt)
+    response = rq.recent_changes(scope, fromdt, todt)
+    # Get outfile
+    outfile = os.path.join(archivedir, 
+        scope + '_' + fromdt.replace('-', '') + '-' + todt.replace('-', '') + '.xml')
+    print("Archiving request at {0}".format(outfile))
+    # Convert elements to rows in dataframe
+    with open(outfile, 'w') as f:
+        f.write(response.text)
+
+
+def request_changes(fromdt, todt=None, scope='knb-lter-jrn',
+    dedup = True, parsedt=False):
+    """
+    Request PASTA change records in specified temporal range and parse
+    into a dataframe.
+
+    Parameters
+    ----------
+    fromdt : string
+        Starting datetime for the request (YYYY-MM-DD)
+    todt : string, optional
+        Ending datetime for the request (YYYY-MM-DD), by default None
+    scope : str, optional
+        EDI scope to request changes for, by default 'knb-lter-jrn'
+    dedup : bool, optional
+        Flag to remove duplicates, by default True
+    parsedt : bool, optional
+        Flag to parse 'date' field to datetime index, by default False
+    """
+    # An element tree will be returned from the api request
+    print('Requesting PASTA changes for {0} from {1} to {2}'.format(
+        scope, fromdt, todt))
+    response = rq.recent_changes(scope, fromdt, todt)
+    root = rq.response_to_ET(response)
     # Convert elements to rows in dataframe
     df_out = changeroot_to_df(root)
     # dedup and parsedt options

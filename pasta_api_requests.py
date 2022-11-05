@@ -6,24 +6,56 @@ from datetime import date
 import os
 import pdb
 
-def load_xml(xmlname):
+def archived_response_to_ET(xmlname):
     """
-    Load a stored request xml file
+    Load an archived python request xml file and return it as an ElementTree
+
+    Parameters
+    ----------
+    xmlname : string
+        filename and path to a stored response file
     """
     tree = ET.parse(xmlname)
     root = tree.getroot()
     return(root)
 
-
-def search_request(fqs, fls, sort, rows, env='production'):
+def response_to_ET(response):
     """
-    This is the _search data packages_ API call.
+    Return the response from a PASTA request as an ElementTree
+
+    Parameters
+    ----------
+    response : string
+        A response from a python request to the PASTA API
+    """
+    root = ET.fromstring(response.text)
+    return(root)
+
+
+def pasta_solr_search(fqs, fls, sort, rows, env='production'):
+    """
+    Make python requests to the PASTA _search data packages_ API call.
 
     curl -i -X GET "https://pasta.lternet.edu/package/search/eml?defType=edismax&q=*&fq=scope:knb-lter-jrn&fl=packageid,doi,keyword,title,begindate,enddate,pubdate&rows=700"
 
     See PASTA docs: https://pastaplus-core.readthedocs.io/en/latest/doc_tree/pasta_api/data_package_manager_api.html#search-data-packages
 
     Also see the Apache Solr docs: https://lucene.apache.org/solr/guide/
+
+    Parameters
+    ----------
+    fqs : string or string list
+        fq must be a 'field:queryterm' or list of 'field:queryterm'
+        possible fields are 'scope', 'author', 'title', 'packageid', etc
+        queryterms can be prefixed with '-' to exclude and use '*' wildcards
+    fls : string or string list
+        Fields to return from pasta - solr needs comma or space separated list
+    sort : string or string list
+        Fields to sort on (follow with ',asc' or ',desc'
+    rows : int
+        Number of rows to include in response
+    env : str, optional
+        PASTA environment to search, by default 'production'
     """
     if env=='staging':
         base_url = 'https://pasta-s.lternet.edu/package/search/eml'
@@ -40,17 +72,24 @@ def search_request(fqs, fls, sort, rows, env='production'):
     response = requests.get(base_url, params=params)
     # Print out the request url
     print(response.request.url)
-    root = ET.fromstring(response.text)
-    return(root)
+    return(response)
 
-def recent_changes_request(scope, fromdt, todt=None):
-    """
-    This is the _list recent changes_ call. It returns an xml populated with 
-    operations in the PASTA database.
+def recent_changes(scope, fromdt, todt=None):
+    """The _list recent changes_ PASTA API request. It returns an xml
+    response populated with operations in the PASTA database.
 
     curl -i -X GET 'https://pasta.lternet.edu/package/changes/eml?fromDate=2017-02-01T12:00:00&toDate=2020-01-28&scope=knb-lter-jrn'
 
     see: https://pastaplus-core.readthedocs.io/en/latest/doc_tree/pasta_api/data_package_manager_api.html#list-recent-changes
+
+    Parameters
+    ----------
+    scope : str
+        EDI scope for the request
+    fromdt : string
+        Starting datetime for the request (YYYY-MM-DD)
+    todt : string, optional
+        Ending datetime for the request (YYYY-MM-DD), by default None
     """
     if todt is None:
         from datetime import datetime
@@ -63,12 +102,10 @@ def recent_changes_request(scope, fromdt, todt=None):
     response = requests.get(base_url, params=params)
     # Print out the request url
     print(response.request.url)
-    root = ET.fromstring(response.text)
-    return(root)
+    return(response)
 
 def pkg_entity_names(scope, identifier, revision):
-    """
-    Request entity identifiers and names for a specified data package.
+    """Request entity identifiers and names for a specified data package.
 
     Note that PASTA returns a csv-like text object, but some entity names have
     commas, so they won't parse with pandas read_csv (using StringIO, for ex.).
@@ -77,6 +114,15 @@ def pkg_entity_names(scope, identifier, revision):
     API documentation:
 
     https://pastaplus-core.readthedocs.io/en/latest/doc_tree/pasta_api/data_package_manager_api.html#read-data-entity-name
+
+    Parameters
+    ----------
+    scope : string
+        EDI scope for the request
+    identifier : int
+        Data package identifier
+    revision : int
+        Revision number of the data package
     """
     # Create URL
     base_url = 'https://pasta.lternet.edu/package/name/eml/'
@@ -92,8 +138,7 @@ def pkg_entity_names(scope, identifier, revision):
     return(df)
 
 def pkg_entity_metadata(scope, identifier, revision, entityid):
-    """
-    Get entity names/identifiers for a specified data package. Entityid is
+    """Get entity names/identifiers for a specified data package. Entityid is
     the identifier hash for the entity in PASTA, which can be returned using
     the pkg_entity_names function.
 
@@ -101,6 +146,18 @@ def pkg_entity_metadata(scope, identifier, revision, entityid):
     returns the ElementTree root derived from it.
 
     https://pastaplus-core.readthedocs.io/en/latest/doc_tree/pasta_api/data_package_manager_api.html#read-data-entity-resource-metadata
+
+
+    Parameters
+    ----------
+    scope : string
+        EDI scope for the request
+    identifier : int
+        Data package identifier
+    revision : int
+        Revision number of the data package
+    entityid : string
+        identifier hash for the entity in PASTA
     """
     # Create the URL
     base_url = 'https://pasta.lternet.edu/package/data/rmd/eml/'
@@ -110,18 +167,32 @@ def pkg_entity_metadata(scope, identifier, revision, entityid):
     response = requests.get(rq_url)
     # Print out the request url and return ET root
     print(response.request.url)
-    root = ET.fromstring(response.text)
-    return(root)
+    
+    return(response)
 
 
 def pkg_revisions(identifier, scope='knb-lter-jrn', filt='newest'):
-    """
-    Request the package revision numbers for a package in PASTA.
+    """Request the package revision numbers for a package in PASTA.
+    
     Change filt to None to get all revisions in PASTA
+
+    Parameters
+    ----------
+    identifier : int
+        Data package identifier
+    scope : str, optional
+        EDI scope for the request, by default 'knb-lter-jrn'
+    filt : str, optional
+        _description_, by default 'newest'
+
+    Returns
+    -------
+    _type_
+        _description_
     """
     # Create the URL
     base_url = 'https://pasta.lternet.edu/package/eml/'
-    rq_url = urljoin(base_url, '/'.join([scope, identifier]))
+    rq_url = urljoin(base_url, '/'.join([scope, str(identifier)]))
     # Parameters
     params = (
         ('filter', filt),
@@ -140,9 +211,9 @@ def aud_document(identifier, scope='knb-lter-jrn'):
     Parameters
     ----------
     identifier : int
-        [description]
+        Data package identifier
     scope : str, optional
-        [description], by default 'knb-lter-jrn'
+        EDI scope for the request, by default 'knb-lter-jrn'
 
     Returns
     -------
@@ -155,21 +226,20 @@ def aud_document(identifier, scope='knb-lter-jrn'):
     # Request, print return
     response = requests.get(rq_url)#, params=params)
     print(response.request.url)
-    root = ET.fromstring(response.text)
-    return(root)
+    return(response)
 
 
-def aud_package(identifier, rev=1, scope='knb-lter-jrn'):
+def aud_package(scope, identifier, revision):
     """Get an audit report for access to a datapackage (scope.identifier.rev)
 
     Parameters
     ----------
+    scope : string
+        EDI scope for the request
     identifier : int
-        [description]
-    rev : str, optional
-        [description], by default '1'
-    scope : str, optional
-        [description], by default 'knb-lter-jrn'
+        Data package identifier
+    revision : int
+        Revision number of the data package
 
     Returns
     -------
@@ -182,8 +252,7 @@ def aud_package(identifier, rev=1, scope='knb-lter-jrn'):
     # Request print return
     response = requests.get(rq_url)#, params=params)
     print(response.request.url)
-    root = ET.fromstring(response.text)
-    return(root)
+    return(response)
 
 
 def aud_report_dpm(servmethod, user, group, resid, fromdt, todt, lim,
@@ -230,8 +299,7 @@ def aud_report_dpm(servmethod, user, group, resid, fromdt, todt, lim,
     # Request, print return
     response = requests.get(rq_url, params=params, auth=(dn, pw))
     print(response.request.url)
-    root = ET.fromstring(response.text)
-    return(root)
+    return(response)
 
 def aud_count_dpm(servmethod, user, group, resid, fromdt, todt, lim,
                   dn, pw):
@@ -277,5 +345,4 @@ def aud_count_dpm(servmethod, user, group, resid, fromdt, todt, lim,
     # Request, print return
     response = requests.get(rq_url, params=params, auth=(dn, pw))
     print(response.request.url)
-    root = ET.fromstring(response.text)
-    return(root)
+    return(response)
