@@ -2,9 +2,7 @@ import requests
 from requests.compat import urljoin
 import xml.etree.ElementTree as ET
 import pandas as pd
-from datetime import date
 import os
-import pdb
 
 def archived_response_to_ET(xmlname):
     """

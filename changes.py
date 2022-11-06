@@ -159,19 +159,29 @@ def get_counts(df):
     df.loc[df.action=='deleteDataPackage','n_tot'] = -1
     return(df)
 
-def counts_to_daily(df, startdt = None):
+def counts_to_daily(df, fromdt = None, todt = None):
     """
     Create a daily dataframe with updates, creates, and total packages.
+
+    Parameters
+    ----------
+    df : pandas dataframe
+        Pandas dataframe derived from 'get_counts()'
+    fromdt : string, optional
+        Starting datetime for the request (YYYY-MM-DD), by default None
+    todt : string, optional
+        Ending datetime for the request (YYYY-MM-DD), by default None
     """
     # Create datetime index first if needed
     df2 = df.copy()
     if not isinstance(df2.index, pd.DatetimeIndex):
         df2.index = pd.to_datetime(df2['date'])
         #, format='%Y-%b-%dT%H:%M:%S.%f')
-    if startdt is not None:
-        df_out = df2.loc[df2.index > startdt,
-                ['n_update', 'n_create', 'n_tot']].resample('D').sum()
-    else:
-        df_out = df2.loc[:,['n_update','n_create','n_tot']].resample('D').sum()
+    if fromdt is None:
+        fromdt = min(df2.index)
+    if todt is None:
+        todt = max(df2.index)
+    df_out = df2.loc[fromdt:todt,['n_update','n_create','n_tot']].resample(
+            'D').sum()
     return(df_out)
 

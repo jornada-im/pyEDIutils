@@ -5,10 +5,20 @@ import pdb
 
     
 def searchroot_to_df(root, fields):
-    """
-    Convert a returned search Element Tree object to a dataframe.
-    Each element becomes a row with columns in the fields argument.
-    Keyword fields are ignored.
+    """Convert PAST solr search result to a dataframe
+
+    Convert a returned ElementTree object from a PASTA solr search to a
+    dataframe. Each element becomes a row with columns in the fields argument.
+    Multifields, like keywords and authors, are joined as semicolon-delimited
+    lists in the resulting dataframe column.
+
+    Parameters
+    ----------
+    root : ElementTree object
+        An ElementTree object returned from a PASTA solr search
+    fields : string list
+        A list of field names PASTA returned in the query, which will become
+        columns in the dataframe
     """
     dfill = {}
     for f in fields:
@@ -18,7 +28,7 @@ def searchroot_to_df(root, fields):
         elif f=='coordinates':
             # The solr search sends back a set of coordinates for each
             # geographicCoverage element, so if there are multiple elements
-            # this will create a column that exceeds the number of datasetids
+            # fdthis will create a column that exceeds the number of datasetids
             # Not sure how to parse these multiple returns yet, so just
             # counting them here.
             #dfill[f] = [';'.join([v.text for v in vs.iter(f)]) 
@@ -37,9 +47,10 @@ def searchroot_to_df(root, fields):
 def search_pasta(query='scope:knb-lter-jrn',
         fields=['packageid','doi','title','pubdate'],
         sortby='packageid,asc', rows=500, returnroot=False):
-    """
-    Get packages and relevant fields for a given scope. Uses the Apache
-    solr search in PASTA:
+    """Search packages in PASTA
+    
+    This searches packages across a variety of fields using the Apache solr
+    search in PASTA:
     https://lucene.apache.org/solr/guide/8_8/query-syntax-and-parsing.html
 
     Example:
@@ -49,6 +60,25 @@ def search_pasta(query='scope:knb-lter-jrn',
                         fields=('packageid','title','pubdate','keyword',
                                 'author','begindate','enddate','doi'),
                        sortby='packageid,desc')
+
+    Parameters
+    ----------
+    query : str or list of strings, optional
+        A string or list of query terms (field:term), by default 'scope:knb-lter-jrn'
+    fields : list, optional
+        List of fields to return from the search, by default 
+        ['packageid','doi','title','pubdate']
+    sortby : str, optional
+        List of  fields to sort result by, by default 'packageid,asc'
+    rows : int, optional
+        number of rows to return, by default 500
+    returnroot : bool, optional
+        Flag to return ElementTree root instead of dataframe, by default False
+
+    Returns
+    -------
+    dataframe or (dataframe, root)
+        Returns either a dataframe or a dataframe and ElementTree root object
     """
     # fq must be a 'field:queryterm' or list of 'field:queryterm'
     # possible fields are 'scope', 'author', 'title', 'packageid', etc
