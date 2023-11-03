@@ -141,15 +141,13 @@ def get_counts(df):
     """
     Add columns that count number of created, updated, and deleted actions
     for each PASTA change. Also add a total package tracker column (1 for 
-    creation, -1 for deletion) and a studyid column.
+    creation, -1 for deletion).
     """
     # Add columns - number of updates and creates, + extracted study id
     df['n_update'] = 0
     df['n_create'] = 0
     df['n_delete'] = 0
     df['n_tot'] = 0
-    #convert to str, studyid excludes mistaken 0
-    df['studyid'] = df.pkgid.astype(str).str[-6:-3]
     # Fill in number of updates or create for each record
     df.loc[df.action=='updateDataPackage','n_update'] = 1
     df.loc[df.action=='createDataPackage','n_create'] = 1
