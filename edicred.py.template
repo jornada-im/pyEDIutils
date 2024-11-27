@@ -1,0 +1,4 @@
+# Setup user credentials
+# If this is a new template, copy to edicred.py, insert credentials, then delete this line.
+dn = 'uid={scope},o=EDI,dc=edirepository,dc=org'
+pw = '{password}'
