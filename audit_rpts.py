@@ -45,12 +45,15 @@ def request_audit(identifier, rev=None, scope='knb-lter-jrn'):
 
     Parameters
     ----------
-    identifier : [type]
-        [description]
-    rev : [type], optional
-        [description], by default None
+    identifier : int
+        Data package identifier number
+    rev : int, optional
+        Revision number of the data package. If provided, requests read
+        counts for the specific package revision (scope.identifier.revision).
+        If None, requests read counts for the document (scope.identifier)
+        across all revisions, by default None
     scope : str, optional
-        [description], by default 'knb-lter-jrn'
+        EDI scope for the request, by default 'knb-lter-jrn'
     """
     # An element tree will be returned from the api request
     if rev is not None:
@@ -78,24 +81,28 @@ def request_audit_report(servmethod, dn, pw, user=None, group=None,
 
     Parameters
     ----------
-    servmethod : [type]
-        [description]
-    df : [type]
-        [description]
-    pw : [type]
-        [description]
-    user : [type], optional
-        [description], by default None
-    group : [type], optional
-        [description], by default None
+    servmethod : str
+        PASTA service method to filter on (e.g., 'readDataPackage',
+        'createDataPackage', 'updateDataPackage')
+    dn : str
+        Distinguished name for HTTP basic authentication
+        (e.g., 'uid=JRN,o=EDI,dc=edirepository,dc=org')
+    pw : str
+        Password for HTTP basic authentication
+    user : str, optional
+        Filter results to a specific user DN, by default None
+    group : str, optional
+        Filter results to a specific group, by default None
     resid : str, optional
-        [description], by default 'knb-lter-jrn'
-    fromdt : [type], optional
-        [description], by default date.today()
-    todt : [type], optional
-        [description], by default None
+        Resource identifier prefix to filter on (scope or full resource URL),
+        by default 'knb-lter-jrn'
+    fromdt : date, optional
+        Start of the reporting period, by default date.today()
+    todt : date, optional
+        End of the reporting period. If None, no upper bound is applied,
+        by default None
     lim : int, optional
-        [description], by default 10000
+        Maximum number of audit records to return, by default 10000
     """
     # An element tree will be returned from the api request
     print('Requesting audit report for {0} starting {1}'.format(resid, fromdt))
