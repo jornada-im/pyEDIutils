@@ -37,15 +37,15 @@ def drop_duplicates(df):
     print('{0} duplicate records were removed.'.format(n_dupdeletes))
     return(df_dd)
     
-def load_archived_changes(archivedir='./edi_requests/', scope='knb-lter-jrn',
+def load_archived_changes(input_path, scope='knb-lter-jrn',
     dedup=True, parsedt=False):
     """
     Load archived PASTA change records from xml files and parse into dataframe.
 
     Parameters
     ----------
-    archivedir : str, optional
-        path to archive directory string ('./edi_requests'), by default './edi_requests/'
+    input_path : str, optional
+        path to archived requests directory ('./changes_rq')
     scope : str, optional
         EDI scope string, by default 'knb-lter-jrn'
     dedup : bool, optional
@@ -54,7 +54,7 @@ def load_archived_changes(archivedir='./edi_requests/', scope='knb-lter-jrn',
         parse 'date' field to datetime index boolean, by default False
     """
     # List files and select scope
-    files = os.listdir(archivedir)
+    files = os.listdir(input_path)
     scopefiles = sorted([f for f in files if scope in f])
     # Load each archive, convert to dataframe, and concatenate
     for i, f in enumerate(scopefiles):
@@ -73,33 +73,34 @@ def load_archived_changes(archivedir='./edi_requests/', scope='knb-lter-jrn',
         #, format='%Y-%b-%dT%H:%M:%S.%f')
     return(df_out)
 
-def archive_requested_changes(fromdt, todt=None, scope='knb-lter-jrn',
-    archivedir='./edi_requests/'):
+def archive_requested_changes(output_path, fromdt, todt=None,
+    scope='knb-lter-jrn'):
     """
     Request PASTA change records in specified temporal range and parse
     into a dataframe.
 
     Parameters
     ----------
+    output_path : str, optional
+        path to rquest archive directory ('./changes_rq')
     fromdt : string
         datetime string (YYYY-MM-DD)
     todt : string, optional
         datetime string (YYYY-MM-DD), by default None
     scope : str, optional
         EDI scope string, by default 'knb-lter-jrn'
-    archivedir : str, optional
-        path to archive directory string ('./edi_requests'), by default './edi_requests/'
+    
     """
     # An element tree will be returned from the api request
     print('Requesting PASTA changes for {0} from {1} to {2}'.format(
         scope, fromdt, todt))
     response = rq.recent_changes(scope, fromdt, todt)
     # Get outfile
-    outfile = os.path.join(archivedir, 
+    output_file_path = os.path.join(output_path, 
         scope + '_' + fromdt.replace('-', '') + '-' + todt.replace('-', '') + '.xml')
-    print("Archiving request at {0}".format(outfile))
+    print("Archiving request at {0}".format(output_file_path))
     # Convert elements to rows in dataframe
-    with open(outfile, 'w') as f:
+    with open(output_file_path, 'w') as f:
         f.write(response.text)
 
 
